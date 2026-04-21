@@ -181,6 +181,7 @@ Update the Tesseract executable path in the script:
 
 ```python
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+```
 
 ### 2. Select the task to evaluate
 
@@ -188,7 +189,7 @@ In final_eval.py, set:
 
 ```python
 CURRENT_TASK = 'BLUR'
-
+```
 Available options:
 
 BLUR
@@ -199,7 +200,7 @@ CORRUPT
 ### 3. Run evaluation
 ```python
 python final_eval.py
-
+```
 ### 4. Outputs
 
 The script generates:
