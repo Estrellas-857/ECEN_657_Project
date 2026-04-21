@@ -172,27 +172,72 @@ Using both exact-match and character-level metrics is important, because some re
 
 ---
 
-## Repository Structure
 
-Example structure:
+## How to Run
 
-```text
-dataset/
-  clean/
-  degraded/
-    blur_1/
-    blur_2/
-    blur_3/
-    noise_1/
-    noise_2/
-    noise_3/
-    illum_1/
-    illum_2/
-    illum_3/
-    corrupt_1/
-    corrupt_2/
-    corrupt_3/
+### 1. Configure Tesseract path
 
-final_eval.py
-test_rescue_noise.py
-README.md
+Update the Tesseract executable path in the script:
+
+```python
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+### 2. Select the task to evaluate
+
+In final_eval.py, set:
+
+```python
+CURRENT_TASK = 'BLUR'
+
+Available options:
+
+BLUR
+NOISE
+ILLUM
+CORRUPT
+
+### 3. Run evaluation
+```python
+python final_eval.py
+
+### 4. Outputs
+
+The script generates:
+
+summary CSV
+detail CSV
+edit distance distribution
+positional error distribution
+confusion statistics
+
+These outputs are used for both quantitative analysis and slide/report generation.
+
+## Current Project Message
+
+This project is not trying to find one preprocessing method that works for everything.
+
+Instead, it argues that:
+
+some images should be passed directly to OCR
+some images benefit from task-specific rescue
+some OCR errors are best corrected by rule-based postprocessing
+some severe corruptions remain beyond the capability of simple classical preprocessing
+
+This is the main contribution of the project.
+
+## Limitations
+The OCR engine is still based on Tesseract, not a modern end-to-end deep ALPR model
+The dataset is synthetic rather than fully real-world
+Some rescue pipelines are evaluated at the degradation-family level rather than per-instance adaptive routing
+Severe corruption is still difficult to handle with single-frame classical methods
+
+## Future Work
+
+Possible future directions include:
+
+degradation diagnosis before routing
+OCR engine comparison
+per-instance adaptive rescue selection
+multi-frame temporal fusion
+generative restoration / inpainting for severe corruption
+comparison against end-to-end ALPR models
