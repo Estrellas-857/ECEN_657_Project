@@ -1,0 +1,2 @@
+Level,Crop Ratio,Num Images,Exact Match (%),Char Accuracy (%),P1 Accuracy (%),Failed Images,Time (s)
+clean,0.00,1000,0.2,78.09801587301602,0.3,0,81.48

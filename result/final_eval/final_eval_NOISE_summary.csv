@@ -1,0 +1,4 @@
+Task,Level,Num Images,Exact Match (%),Char Accuracy (%),Time (s)
+NOISE,noise_1,100000,64.43,93.95,7363.12
+NOISE,noise_2,100000,70.48,95.11,7465.50
+NOISE,noise_3,100000,81.87,96.90,7359.38

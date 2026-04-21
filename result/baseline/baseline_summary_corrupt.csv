@@ -1,0 +1,4 @@
+Level,Exact Match (%),Char Accuracy (%),Failed Images,Time (s)
+corrupt_1,41.494,89.70497063495905,0,7642.91
+corrupt_2,7.761,84.85745634928448,0,7873.85
+corrupt_3,0.257,11.509375522841383,0,8092.71

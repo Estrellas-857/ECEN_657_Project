@@ -1,0 +1,4 @@
+Task,Level,Num Images,Exact Match (%),Char Accuracy (%),Time (s)
+CORRUPT,corrupt_1,100000,52.37,91.42,7029.52
+CORRUPT,corrupt_2,100000,5.21,75.48,7430.24
+CORRUPT,corrupt_3,100000,0.22,8.73,7886.41
