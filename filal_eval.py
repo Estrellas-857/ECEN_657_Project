@@ -70,23 +70,23 @@ def plate_pattern_score(text):
         return -999
 
     score = 0
-    # P1, P2 应该是数字
+    # P1, P2 is digits
     if text[0].isdigit():
         score += 2
     if text[1].isdigit():
         score += 2
 
-    # P3 应该是字母
+    # P3 should be a letter
     if text[2].isalpha():
         score += 2
 
-    # P4, P5 不强制（字母或数字都行）
+    # P4, P5 are not mandatory (either letters or digits)
     if text[3].isalnum():
         score += 1
     if text[4].isalnum():
         score += 1
 
-    # P6, P7 应该是数字
+    # P6, P7 should be digits
     if text[5].isdigit():
         score += 2
     if text[6].isdigit():
@@ -97,7 +97,7 @@ def plate_pattern_score(text):
 def normalize_plate_text_v3(raw_text):
     text = clean_ocr_text(raw_text)
 
-    # 如果 OCR 输出太长，选最符合牌照规则的 7 位窗口
+    # If OCR output is too long, select the 7-character window that best matches the plate pattern
     if len(text) > 7:
         candidates = [text[i:i+7] for i in range(len(text) - 6)]
         text = max(candidates, key=plate_pattern_score)
@@ -107,22 +107,22 @@ def normalize_plate_text_v3(raw_text):
 
     chars = list(text)
 
-    # P1, P2: 数字位
+    # P1, P2: digits
     for i in [0, 1]:
         if chars[i] == 'O':
             chars[i] = '0'
         elif chars[i] in {'I', 'L'}:
             chars[i] = '1'
 
-    # P3: 字母位
+    # P3: letter position
     if chars[2] == '0':
         chars[2] = 'O'
     elif chars[2] == '1':
         chars[2] = 'I'
 
-    # P4, P5: 不强制，不改
+    # P4, P5: not mandatory, no changes
 
-    # P6, P7: 数字位
+    # P6, P7: digit positions
     for i in [5, 6]:
         if chars[i] == 'O':
             chars[i] = '0'
@@ -132,13 +132,13 @@ def normalize_plate_text_v3(raw_text):
     return ''.join(chars)
 
 # ==========================================
-# 2. 🌟 终极预处理路由引擎
+# 2. 🌟 preprocessing
 # ==========================================
 def apply_preprocessing(cropped_bgr, task, folder_name):
     gray = cv2.cvtColor(cropped_bgr, cv2.COLOR_BGR2GRAY)
     
     if task == 'BLUR':
-        # 放大 + CLAHE (超分辨率思想)
+        # CLAHE
         enlarged = cv2.resize(gray, None, fx=2.0, fy=2.0, interpolation=cv2.INTER_CUBIC)
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         return clahe.apply(enlarged)
@@ -191,21 +191,21 @@ def print_progress(iteration, total, prefix='', length=40):
     if iteration == total: print()
 
 # ==========================================
-# 3. 主流程与 CSV 落地
+# 3. main pipeline and csv output
 # ==========================================
 def main():
     base_dir = 'dataset'
     overall_start = time.time()
 
-    print(f"🚀 开始执行 [{CURRENT_TASK}] 大类 10万级全量跑分...")
-    print(f"🧪 最大测试数量 = {MAX_TEST_IMAGES} 张/组\n")
+    print(f"🚀 start [{CURRENT_TASK}] category...")
+    print(f"🧪 max test batch size = {MAX_TEST_IMAGES} per folder\n")
 
     summary_rows = []
 
     for folder in TARGET_FOLDERS:
         folder_path = os.path.join(base_dir, 'degraded', folder)
         if not os.path.exists(folder_path):
-            print(f"⚠️ 跳过不存在的文件夹: {folder_path}")
+            print(f"⚠️ skip: {folder_path}")
             continue
 
         files = sorted([f for f in os.listdir(folder_path) if f.lower().endswith(('.png', '.jpg'))])[:MAX_TEST_IMAGES]
@@ -222,7 +222,7 @@ def main():
         details_rows = []
 
         folder_start = time.time()
-        prefix = f"🔥 狂飙中 [{folder:^10}]"
+        prefix = f"🔥 running [{folder:^10}]"
         print_progress(0, total_images, prefix=prefix)
 
         for i, f in enumerate(files, 1):
@@ -230,17 +230,17 @@ def main():
             img = cv2.imread(img_path)
             if img is None: continue
 
-            # 1. 裁切与预处理
+            # 1. crop + preprocess
             h, w = img.shape[:2]
             cropped = img[:, int(w * CROP_RATIO):]
             processed = apply_preprocessing(cropped, CURRENT_TASK, folder)
 
-            # 2. OCR 与文本规则后处理
+            # 2. OCR with normalization
             raw_text = pytesseract.image_to_string(processed, config=OCR_CONFIG)
             pred_text = normalize_plate_text_v3(raw_text)
             gt_text = get_ground_truth(f)
 
-            # 3. 成绩计算
+            # 3. performance evaluation
             is_exact_match = (gt_text == pred_text)
             char_acc = calc_character_accuracy(gt_text, pred_text)
             edit_dist = levenshtein_distance(gt_text, pred_text)
@@ -251,7 +251,7 @@ def main():
             error_count_dist[pos_errs] += 1
             edit_distance_dist[edit_dist] += 1
 
-            # 4. 位级与详情记录
+            # 4. positional and detail records
             gt_fixed = fixed_length_text(gt_text, PLATE_LENGTH)
             pred_fixed = fixed_length_text(pred_text, PLATE_LENGTH)
 
@@ -270,12 +270,12 @@ def main():
                     position_confusions[pos][(gt_c, pred_c)] += 1
 
             details_rows.append(row)
-            # 每 100 张更新一下进度条，降低终端刷新带来的性能损耗
+            # refresh
             if i % 100 == 0 or i == total_images:
                 print_progress(i, total_images, prefix=prefix)
 
         # ==========================================
-        # 💾 CSV 文件落地保存
+        # 💾 CSV save
         # ==========================================
         folder_time = time.time() - folder_start
         exact_pct = (exact_matches / total_images) * 100
@@ -287,7 +287,7 @@ def main():
             'Time (s)': f"{folder_time:.2f}"
         })
 
-        # 写入 5 个维度的 CSV
+        # deatils CSV with per-image records and positional breakdown
         details_csv = f'final_eval_{folder}_details.csv'
         with open(details_csv, 'w', newline='', encoding='utf-8') as f_csv:
             fieldnames = ['Image', 'Ground Truth', 'OCR Output', 'Exact Match', 'Edit Distance', 'Positional Errors', 'Char Accuracy (%)']
@@ -321,10 +321,10 @@ def main():
                 for (gt_c, pred_c), count in position_confusions[pos].most_common():
                     writer.writerow({'Position': pos + 1, 'GT Char': gt_c, 'Pred Char': pred_c, 'Count': count})
 
-        print(f"📊 {folder} 跑分完毕! Exact Match: {exact_pct:.2f}% | 耗时: {folder_time:.2f}s")
-        print(f"💾 数据已存入 final_eval_{folder}_*.csv 系列文件\n")
+        print(f"📊 {folder} evaluation completed! Exact Match: {exact_pct:.2f}% | Time: {folder_time:.2f}s")
+        print(f"💾 Data saved to final_eval_{folder}_*.csv files\n")
 
-    # 大类总汇总 CSV
+    # Overall summary CSV
     summary_csv = f'final_eval_{CURRENT_TASK}_summary.csv'
     with open(summary_csv, 'w', newline='', encoding='utf-8') as f_csv:
         writer = csv.DictWriter(f_csv, fieldnames=['Task', 'Level', 'Num Images', 'Exact Match (%)', 'Char Accuracy (%)', 'Time (s)'])
@@ -332,8 +332,8 @@ def main():
         writer.writerows(summary_rows)
 
     print("=" * 70)
-    print(f"✅ [{CURRENT_TASK}] 全量分析完美落幕！汇总表: {summary_csv}")
-    print(f"⏱️ 总耗时: {time.time() - overall_start:.2f}s")
+    print(f"✅ [{CURRENT_TASK}] Overall evaluation completed! Summary: {summary_csv}")
+    print(f"⏱️ Total time: {time.time() - overall_start:.2f}s")
     print("=" * 70)
 
 if __name__ == "__main__":
